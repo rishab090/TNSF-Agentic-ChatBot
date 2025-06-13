@@ -1,8 +1,23 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from fastapi import FastAPI, Request
-import torch
-import settings
+import uvicorn
+from fastapi import FastAPI
+import chunk
+import functions
+from model import PromptRequest
 
-# CHANGE THIS TO YOUR MODEL FOLDER
-mistral_model = AutoModelForCausalLM.from_pretrained(settings.mistral_path, torch_dtype=torch.float16, local_files_only=True)
-mistral_tokenizer = AutoTokenizer.from_pretrained(settings.mistral_path, local_files_only=True)
+ # Pre-index the PDF on startup
+app = FastAPI()
+
+
+@app.post("/search-pdf")
+async def generate_text(request: PromptRequest):
+    response = functions.chatbot_pipeline(request)
+    return {"response": response}
+
+@app.post("/chat")
+async def generate_text(request: PromptRequest):
+    response = functions.chatbot_chat(request)
+    return {"response": response}
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=False)
